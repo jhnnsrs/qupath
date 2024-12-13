@@ -62,6 +62,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.stage.Window;
+
 import org.controlsfx.control.action.Action;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,6 +121,7 @@ import qupath.lib.gui.commands.LogViewerCommand;
 import qupath.lib.gui.commands.ProjectCommands;
 import qupath.lib.gui.commands.TMACommands;
 import qupath.fx.dialogs.Dialogs;
+import qupath.lib.gui.actions.ArkitektActions;
 import qupath.lib.gui.images.stores.DefaultImageRegionStore;
 import qupath.lib.gui.images.stores.ImageRegionStoreFactory;
 import qupath.lib.gui.localization.QuPathResources;
@@ -2954,6 +2956,7 @@ public class QuPathGUI {
 	
 	private ViewerActions viewerActions;
 
+
 	/**
 	 * Get the associations associated with QuPath image viewers.
 	 * @return
@@ -2962,6 +2965,14 @@ public class QuPathGUI {
 		if (viewerActions == null)
 			viewerActions = new ViewerActions(getViewerManager());
 		return viewerActions;
+	}
+
+	private ArkitektActions arkitektActions;
+
+	public ArkitektActions getArktiektActions() {
+		if (arkitektActions == null)
+			arkitektActions = new ArkitektActions(getViewerManager());
+		return arkitektActions;
 	}
 
 

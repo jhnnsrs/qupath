@@ -28,8 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import org.controlsfx.control.decoration.Decorator;
 import org.controlsfx.control.decoration.GraphicDecoration;
 import org.slf4j.Logger;
@@ -58,12 +56,13 @@ import javafx.scene.shape.LineTo;
 import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
 import javafx.scene.text.TextAlignment;
+import qupath.fx.dialogs.Dialogs;
 import qupath.lib.gui.actions.ActionTools;
+import qupath.lib.gui.actions.ArkitektActions;
 import qupath.lib.gui.actions.AutomateActions;
 import qupath.lib.gui.actions.CommonActions;
 import qupath.lib.gui.actions.OverlayActions;
 import qupath.lib.gui.actions.ViewerActions;
-import qupath.fx.dialogs.Dialogs;
 import qupath.lib.gui.localization.QuPathResources;
 import qupath.lib.gui.tools.GuiTools;
 import qupath.lib.gui.tools.IconFactory;
@@ -98,7 +97,9 @@ class ToolBarComponent {
 					 ViewerActions viewerManagerActions,
 					 CommonActions commonActions,
 					 AutomateActions automateActions,
-					 OverlayActions overlayActions) {
+					 OverlayActions overlayActions,
+					 ArkitektActions arkitektActions
+					 ) {
 		this.toolManager = toolManager;
 		this.viewerProperty = viewerManagerActions.getViewerManager().activeViewerProperty();
 
@@ -177,6 +178,10 @@ class ToolBarComponent {
 		nodes.add(ActionTools.createButtonWithGraphicOnly(commonActions.PREFERENCES));
 		nodes.add(ActionTools.createButtonWithGraphicOnly(commonActions.SHOW_LOG));
 		nodes.add(ActionTools.createButtonWithGraphicOnly(commonActions.HELP_VIEWER));
+
+
+		nodes.add(new Separator(Orientation.VERTICAL));
+		nodes.add(ActionTools.createButtonWithGraphicOnly(arkitektActions.LOGIN));
 
 		toolbar.getItems().setAll(nodes);
 	}

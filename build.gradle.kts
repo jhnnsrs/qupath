@@ -161,7 +161,10 @@ dependencies {
         // We don't want to bring in snapshot versions
         exclude(group=group)
     }
+
+    implementation("org.json:json:20231013")
 }
+
 
 
 

@@ -80,7 +80,10 @@ class QuPathMainPaneManager {
 				qupath.getViewerActions(),
 				qupath.getCommonActions(),
 				qupath.getAutomateActions(),
-				qupath.getOverlayActions());
+				qupath.getOverlayActions(),
+				qupath.getArktiektActions()
+				
+				);
 		pane.setTop(toolbar.getToolBar());
 		
 		setAnalysisPaneVisible(true);
