@@ -82,6 +82,57 @@ class ChallengeAnswer {
 }
 
 
+class RetrieveRequest {
+    public String token;
+
+    public RetrieveRequest(String token) {
+        this.token = token;
+    }
+}
+
+
+class UnlokFakt {
+    public String client_id;
+    public String client_secret;
+    public List<String> scopes;
+}
+
+class Fakts {
+    public UnlokFakt unlok;
+
+
+    public Fakts(UnlokFakt unlok) {
+        this.unlok = unlok;
+    }
+}
+
+
+class RetrieveAnswer {
+    public Fakts config;
+
+    public RetrieveAnswer(Fakts config) {
+        this.config = config;
+    }
+}
+
+
+class TokenResponse {
+    public String access_token;
+    public String token_type;
+    public String scope;
+    public String expires_in;
+
+    public TokenResponse(String access_token, String token_type, String scope, String expires_in) {
+        this.access_token = access_token;
+        this.token_type = token_type;
+        this.scope = scope;
+        this.expires_in = expires_in;
+    }
+
+   
+}
+
+
 
 public class Arkitekt {
     private final OkHttpClient client = new OkHttpClient();
@@ -94,58 +145,70 @@ public class Arkitekt {
 
     }
 
-    public void login_user() {
-        String tokenUrl = "https://example.com/oauth2/token";
-        String clientId = "your-client-id";
-        String clientSecret = "your-client-secret";
-        String scope = "your-scope";
+    public String loginUser(UnlokFakt unlok) throws Exception {
+        String tokenUrl = "http://127.0.0.1/lok/o/token/";
+        String clientId = unlok.client_id;
+        String clientSecret =  unlok.client_secret;
+        String scope = String.join(" ", unlok.scopes);
+        String bodyString = "grant_type=client_credentials&client_id=" + clientId + "&client_secret=" + clientSecret;
+        RequestBody body = RequestBody.create(bodyString, MediaType.get("application/x-www-form-urlencoded; charset=utf-8"));
 
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.submit(() -> {
-            try {
-                // Create request body
-                String bodyString = "grant_type=client_credentials&client_id=" + clientId + "&client_secret=" + clientSecret + "&scope=" + scope;
-                RequestBody body = RequestBody.create(bodyString, MediaType.get("application/x-www-form-urlencoded; charset=utf-8"));
+        // Create request
+        Request request = new Request.Builder()
+                .url(tokenUrl)
+                .post(body)
+                .build();
 
-                // Create request
-                Request request = new Request.Builder()
-                        .url(tokenUrl)
-                        .post(body)
-                        .build();
+        // Execute request
+        try (Response response = client.newCall(request).execute()) {
+            if (response.isSuccessful() && response.body() != null) {
+                // Handle response
+                String responseJson = response.body().string();
+                System.out.println("Response: " + responseJson);
 
-                // Execute request
-                try (Response response = client.newCall(request).execute()) {
-                    if (response.isSuccessful() && response.body() != null) {
-                        // Handle response
-                        String responseJson = response.body().string();
-                        System.out.println("Token Response: " + responseJson);
-                        // Parse the token from the response if needed
-                    } else {
-                        // Handle error response
-                        Platform.runLater(() -> {
-                            Alert alert = new Alert(Alert.AlertType.ERROR);
-                            alert.setTitle("Error");
-                            alert.setHeaderText(null);
-                            alert.setContentText("Failed to obtain token. Response code: " + response.code());
-                            alert.showAndWait();
-                        });
-                    }
-                }
-            } catch (Exception e) {
-                Platform.runLater(() -> {
-                    Alert alert = new Alert(Alert.AlertType.ERROR);
-                    alert.setTitle("Error");
-                    alert.setHeaderText(null);
-                    alert.setContentText("An error occurred: " + e.getMessage());
-                    alert.showAndWait();
-                });
+                TokenResponse tokenResponse = gson.fromJson(responseJson, TokenResponse.class);
+
+                System.out.println("Token Response: " + tokenResponse);
+                return tokenResponse.access_token;
+                // Parse the token from the response if needed
+            } else {
+                throw new Exception("Failed to obtain token. Response code: " + response.code());
             }
-        });
+        } catch (Exception e) {
+            throw new RuntimeException("An error occurred why login in: " + e.getMessage(), e);
+        }
+        
     }
 
 
-    
+    public Fakts retrieveFakts(String token) throws Exception {
 
+        // Create JSON from challenge
+        String challengeJson = gson.toJson(new RetrieveRequest(token));
+
+        // Create request body
+        RequestBody challengeBody = RequestBody.create(challengeJson, MediaType.get("application/json; charset=utf-8"));
+
+        // Create request
+        Request challengeRequest = new Request.Builder()
+                .url("http://127.0.0.1/lok/f/claim/")
+                .post(challengeBody)
+                .build();
+
+        // Execute request
+        try (Response challengeResponse = client.newCall(challengeRequest).execute()) {
+            if (challengeResponse.isSuccessful() && challengeResponse.body() != null) {
+                // Handle successful challenge response
+                String answerJson = challengeResponse.body().string();
+                RetrieveAnswer answer = gson.fromJson(answerJson, RetrieveAnswer.class);
+
+                return answer.config;
+            } else {
+                throw new Exception("Failed to retrieve Fakts. Response code: " + challengeResponse.code());
+            }
+        }
+
+    }
 
   
     public void login(String url) {
@@ -177,8 +240,12 @@ public class Arkitekt {
 
                             // Open the default web browser with the device code URL
                             try {
+
+                                String starturl = "http://127.0.0.1/lok/f/configure/?grant=device_code&device_code=" + deviceCode;
+                                System.err.println(starturl);
                                 java.awt.Desktop desktop = java.awt.Desktop.getDesktop();
-                                java.net.URI oURL = new java.net.URI("http://127.0.0.1/f/lok/device?code" + deviceCode);
+
+                                java.net.URI oURL = new java.net.URI(starturl);
                                 desktop.browse(oURL);
                             } catch (Exception e) {
                                 // Display device code (e.g., in an alert)
@@ -223,12 +290,16 @@ public class Arkitekt {
                                                 System.out.println("Challenge pending");
                                             } else {
 
+                                                Fakts fakts = retrieveFakts(answer.token);
+
+                                                String token = loginUser(fakts.unlok);
+
                                                 // Handle approved response
                                                 Platform.runLater(() -> {
                                                     Alert alert = new Alert(Alert.AlertType.ERROR);
                                                     alert.setTitle("Error");
                                                     alert.setHeaderText(null);
-                                                    alert.setContentText("Successfully challenged. Token: " + answer.token);
+                                                    alert.setContentText("Successfully challenged. Token: " + token);
                                                     alert.showAndWait();
                                                 });
 
